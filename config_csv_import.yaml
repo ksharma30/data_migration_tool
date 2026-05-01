@@ -1,0 +1,89 @@
+# CSV Import Configuration
+# Usage: python migrate.py config_csv_import.yaml
+
+# CSV Source - Multiple files
+source:
+  type: "csv"
+  delimiter: ","
+  quote_char: "\""
+  header: true
+  # List of CSV files to import with their target table names
+  csv_files:
+    # - file: "G:\\Jitendra\\BuildZoom\\2024_09_fullBuild\\properties.20240813.full.csv"
+    #   table: "USBuildingPermitPropertiesRawData"
+    - file: "G:\\Jitendra\\BuildZoom\\2024_09_fullBuild\\building_permits.20240813.full.csv"
+      table: "USBuildingPermitsRawData"
+    - file: "G:\\Jitendra\\BuildZoom\\2024_09_fullBuild\\building_permit_classifications.20240813.full.csv"
+      table: "USBuildingPermitClassificationsRawData"
+
+# SQL Server Destination
+destination:
+  type: "mssql"
+  host: "ca1mdesdb22"
+  port: 1433
+  database: "BuildZoomPermitData_2024"
+  username: ""
+  password: ""
+  windows_auth: true
+  driver: "ODBC Driver 17 for SQL Server"
+  schema: "dbo"
+
+# Directory paths
+directories:
+  input: "sql2pg_copy/input"
+  intermediate: "sql2pg_copy/intermediate"
+  output: "sql2pg_copy/output"
+
+# Migration settings
+migration:
+  # List of tables to process - these should match the table names in csv_files
+  tables:
+    # - "USBuildingPermitPropertiesRawData"
+    - "USBuildingPermitsRawData"
+    - "USBuildingPermitClassificationsRawData"
+  
+  exclude_tables: [USBuildingPermitPropertiesRawData]
+  
+  # Drop table if exists in SQL Server before creating
+  drop_if_exists: true
+  
+  # CSV separator
+  csv_separator: ","
+  
+  # BCP Import Settings
+  bcp:
+    # Use BCP for import (true = BCP, false = BULK INSERT)
+    # BCP is MUCH faster for large files (60M+ rows)
+    use_bcp: true
+    # Batch size (rows per batch)
+    batch_size: 100000
+    # Code page (65001 = UTF-8, 1252 = Windows-1252)
+    code_page: "65001"
+    # Row delimiter
+    row_delimiter: "\n"
+    # Timeout in seconds for BCP command (increased for large files: 95GB, 14GB)
+    timeout: 14400  # 4 hours per file
+  
+  # Schema migration settings
+  schema:
+    create_indexes: false
+    create_foreign_keys: false
+    create_primary_keys: false
+    create_unique_constraints: false
+    create_check_constraints: false
+
+# Performance settings
+performance:
+  parallel_tables: 1
+  bcp_timeout: 14400  # 4 hours per file
+
+# Logging settings
+logging:
+  level: "INFO"
+  log_to_file: true
+  log_file: "csv_import.log"
+  log_to_console: true
+
+# Operation mode
+# 8 = CSV -> MSSQL (Import CSV file to SQL Server using BCP)
+mode: 8

@@ -1,0 +1,179 @@
+# SQL Server to PostgreSQL Migration Tool - Example Config
+
+# This is an example configuration file showing all available options
+# Copy this file to config.yaml and update with your actual values
+
+# ============================================================================
+# SOURCE DATABASE (SQL Server)
+# ============================================================================
+source:
+  type: "mssql"
+  
+  # Connection details
+  host: "localhost"                    # SQL Server hostname or IP
+  port: 1433                           # SQL Server port (default: 1433)
+  database: "AdventureWorks"           # Source database name
+  
+  # Authentication
+  # Option 1: SQL Server Authentication
+  username: "sa"
+  password: "YourStrongPassword123!"
+  windows_auth: false
+  
+  # Option 2: Windows Authentication (comment out username/password above)
+  # username: ""
+  # password: ""
+  # windows_auth: true
+  
+  # ODBC Driver (check available drivers with 'odbcinst -q -d' on Linux)
+  driver: "ODBC Driver 17 for SQL Server"
+  # Or: "ODBC Driver 18 for SQL Server"
+  # Or: "SQL Server Native Client 11.0"
+
+# ============================================================================
+# DESTINATION DATABASE (PostgreSQL)
+# ============================================================================
+destination:
+  type: "postgres"
+  
+  # Connection details
+  host: "localhost"                    # PostgreSQL hostname or IP
+  port: 5432                           # PostgreSQL port (default: 5432)
+  database: "adventureworks_pg"        # Target database name
+  
+  # Authentication
+  username: "postgres"
+  password: "YourPostgresPassword123!"
+  
+  # SSL connection (set to true if your PostgreSQL server requires SSL)
+  ssl: false
+
+# ============================================================================
+# DIRECTORY CONFIGURATION
+# ============================================================================
+directories:
+  # Input directory (reserved for future use)
+  input: "sql2pg_copy/input"
+  
+  # Intermediate directory for CSV files and SQL scripts
+  # This will contain: [database_name]/[table_name]/data.csv, *.sql
+  intermediate: "sql2pg_copy/intermediate"
+  
+  # Output directory for logs and reports
+  output: "sql2pg_copy/output"
+
+# ============================================================================
+# MIGRATION SETTINGS
+# ============================================================================
+migration:
+  
+  # Tables to migrate
+  # Option 1: Specify specific tables
+  tables:
+    - "Customers"
+    - "Orders"
+    - "OrderDetails"
+    - "Products"
+  
+  # Option 2: Leave empty to migrate ALL tables in the database
+  # tables: []
+  
+  # Tables to exclude (useful when migrating all tables)
+  exclude_tables:
+    - "sysdiagrams"
+    - "temp_table"
+  
+  # Drop table if it exists in PostgreSQL before creating
+  # WARNING: This will delete existing data!
+  drop_if_exists: true
+  
+  # ---- BCP Export Settings ----
+  bcp:
+    # Field delimiter (default: comma)
+    field_delimiter: ","
+    
+    # Row delimiter (use \n for newline)
+    row_delimiter: "\n"
+    
+    # Text qualifier for fields containing delimiters
+    text_qualifier: '"'
+    
+    # Batch size for BCP export (larger = faster but more memory)
+    # For tables with millions of rows, try 500000 or higher
+    batch_size: 100000
+    
+    # Code page for character encoding
+    # 65001 = UTF-8 (recommended)
+    # 1252 = Windows Latin-1
+    code_page: "65001"
+  
+  # ---- PostgreSQL COPY Settings ----
+  copy:
+    # Format: csv, text, or binary
+    format: "csv"
+    
+    # Header row in CSV (should match BCP export)
+    header: true
+    
+    # Delimiter (should match BCP field_delimiter)
+    delimiter: ","
+    
+    # Quote character
+    quote: '"'
+    
+    # Escape character
+    escape: '"'
+    
+    # String to represent NULL values (empty string means empty field = empty string, not NULL)
+    null: ""
+  
+  # ---- Schema Migration Settings ----
+  schema:
+    # Create indexes after data load
+    # Set to false for large tables, create indexes manually later
+    create_indexes: true
+    
+    # Create foreign keys
+    # IMPORTANT: Should be false if tables are migrated in random order
+    # Add foreign keys manually after all tables are migrated
+    create_foreign_keys: false
+    
+    # Create primary keys (usually should be true)
+    create_primary_keys: true
+    
+    # Create unique constraints
+    create_unique_constraints: true
+    
+    # Create check constraints
+    create_check_constraints: true
+
+# ============================================================================
+# LOGGING SETTINGS
+# ============================================================================
+logging:
+  # Log level: DEBUG, INFO, WARNING, ERROR, CRITICAL
+  level: "INFO"
+  
+  # Log to file
+  log_to_file: true
+  log_file: "migration.log"
+  
+  # Log to console (stdout)
+  log_to_console: true
+
+# ============================================================================
+# PERFORMANCE SETTINGS
+# ============================================================================
+performance:
+  # Number of tables to migrate in parallel
+  # Set to 1 for sequential migration (safer)
+  # Set to 2-4 for parallel migration (faster but uses more resources)
+  parallel_tables: 1
+  
+  # Timeout for BCP command in seconds
+  # For very large tables (100M+ rows), increase this value
+  bcp_timeout: 3600    # 1 hour
+  
+  # Timeout for COPY command in seconds
+  copy_timeout: 3600   # 1 hour
+
